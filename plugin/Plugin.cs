@@ -13,25 +13,21 @@ namespace KoH2Upscale
     public class Plugin : BaseUnityPlugin
     {
         internal static ManualLogSource Log;
-        string lastCameraDump;
+        static string lastCameraDump;
 
         void Awake()
         {
             Log = Logger;
             Log.LogInfo($"graphics {SystemInfo.graphicsDeviceType} {SystemInfo.graphicsDeviceVersion}, screen {Screen.width}x{Screen.height}");
             SceneManager.sceneLoaded += (scene, mode) => { Log.LogInfo($"scene loaded: {scene.name} ({mode})"); DumpCameras(false); };
-            InvokeRepeating(nameof(PollCameras), 5f, 5f);
+            // The game destroys BepInEx's manager object after startup, so runtime components live on our own.
+            var host = new GameObject("KoH2Upscale");
+            DontDestroyOnLoad(host);
+            host.hideFlags = HideFlags.HideAndDontSave;
+            host.AddComponent<DevCommands>();
         }
 
-        void PollCameras() => DumpCameras(false);
-
-        void Update()
-        {
-            if (Input.GetKeyDown(KeyCode.F10))
-                DumpCameras(true);
-        }
-
-        void DumpCameras(bool force)
+        internal static void DumpCameras(bool force)
         {
             var sb = new StringBuilder();
             foreach (var cam in Camera.allCameras.OrderBy(c => c.depth))
