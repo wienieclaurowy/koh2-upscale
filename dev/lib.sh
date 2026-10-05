@@ -27,11 +27,22 @@ finish() {
     rm -f "$dir/launch.env" "$cmd"
 }
 
+# KOH2_OPTISCALER=1 loads Proton-CachyOS's OptiScaler as winmm.dll (UnityPlayer imports it; BepInEx owns
+# winhttp). Wine's OptiScaler redirect only fires on the native load path, hence the winmm=n,b override.
+optiscaler_env() {
+    echo 'WINEDLLOVERRIDES="winhttp,winmm=n,b"'
+    echo PROTON_USE_OPTISCALER=1
+    echo PROTON_OPTISCALER_NAME=winmm.dll
+    echo PROTON_FSR4_UPGRADE=1
+    echo "PROTON_OPTISCALER_CONFIG=\"Upscalers.Dx11Upscaler=fsr31_12;Spoofing.Dxgi=false;Log.LogToFile=true;Log.LogLevel=${KOH2_OPTISCALER_LOGLEVEL:-2}\""
+}
+
 launch_and_load() {
     [ -n "$(game_pid)" ] && { echo "game already running"; return 1; }
     {
         echo "WINEDLLOVERRIDES=winhttp=n,b"
         echo "KOH2UPSCALE_NO_CRASH_REPORTS=1"
+        [ "${KOH2_OPTISCALER:-0}" = 1 ] && optiscaler_env
         for kv in "$@"; do echo "$kv"; done
     } > "$dir/launch.env"
     rm -f "$log" "$cmd"

@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Text;
 using BepInEx;
+using BepInEx.Configuration;
 using BepInEx.Logging;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -13,6 +14,7 @@ namespace KoH2Upscale
     public class Plugin : BaseUnityPlugin
     {
         internal static ManualLogSource Log;
+        ConfigEntry<string> mode;
         static string lastCameraDump;
 
         void Awake()
@@ -27,6 +29,12 @@ namespace KoH2Upscale
             DontDestroyOnLoad(host);
             host.hideFlags = HideFlags.HideAndDontSave;
             host.AddComponent<DevCommands>();
+
+            mode = Config.Bind("Upscaler", "Mode", "off", "off, or spike (M2: NGX evaluate at native size). Env KOH2UPSCALE_MODE overrides.");
+            var activeMode = System.Environment.GetEnvironmentVariable("KOH2UPSCALE_MODE") ?? mode.Value;
+            Log.LogInfo($"mode {activeMode}");
+            if (activeMode == "spike" && Native.Load(System.IO.Path.GetDirectoryName(Info.Location)))
+                host.AddComponent<UpscaleController>();
         }
 
         internal static void DumpCameras(bool force)
