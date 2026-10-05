@@ -29,12 +29,13 @@ finish() {
 
 # KOH2_OPTISCALER=1 loads Proton-CachyOS's OptiScaler as winmm.dll (UnityPlayer imports it; BepInEx owns
 # winhttp). Wine's OptiScaler redirect only fires on the native load path, hence the winmm=n,b override.
+# PROTON_OPTISCALER_CONFIG rewrites OptiScaler.ini in place, so keys a test may set are reset to auto each run.
 optiscaler_env() {
     echo 'WINEDLLOVERRIDES="winhttp,winmm=n,b"'
     echo PROTON_USE_OPTISCALER=1
     echo PROTON_OPTISCALER_NAME=winmm.dll
     echo PROTON_FSR4_UPGRADE=1
-    echo "PROTON_OPTISCALER_CONFIG=\"Upscalers.Dx11Upscaler=fsr31_12;Spoofing.Dxgi=false;Log.LogToFile=true;Log.LogLevel=${KOH2_OPTISCALER_LOGLEVEL:-2}\""
+    echo "PROTON_OPTISCALER_CONFIG=\"Upscalers.Dx11Upscaler=fsr31_12;Spoofing.Dxgi=false;Log.LogToFile=true;Log.LogLevel=${KOH2_OPTISCALER_LOGLEVEL:-2};FSR.Fsr4Preset=auto;FSR.DebugView=auto;FSR.Fsr4EnableDebugView=auto;FSR.Fsr4EnableWatermark=auto${KOH2_OPTISCALER_EXTRA:+;$KOH2_OPTISCALER_EXTRA}\""
 }
 
 launch_and_load() {
