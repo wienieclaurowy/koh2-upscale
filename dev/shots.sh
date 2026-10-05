@@ -1,6 +1,7 @@
 #!/bin/bash
 # Usage: [KOH2_AA=TAA] [KOH2_VIEWS="0 5 9"] dev/shots.sh LABEL [KEY=value ...]
-# Loads the save, parks the camera on benchmark views and saves full-size screenshots to ref/shots/LABEL/.
+# Loads the save, parks the camera on benchmark views and saves full-size screenshots to ref/shots/LABEL/
+# (monitor: KOH2_OUTPUT in dev/local.env, all monitors if unset).
 set -uo pipefail
 . "$(dirname "$(readlink -f "$0")")/lib.sh"
 label=${1:?label}; shift
@@ -12,7 +13,7 @@ sleep 5
 for v in ${KOH2_VIEWS:-0 5 9}; do
     send "view $v"
     sleep 4
-    grim -o DP-1 "$out/view$v.png"
+    grim ${KOH2_OUTPUT:+-o "$KOH2_OUTPUT"} "$out/view$v.png"
 done
 finish
 ls "$out"
