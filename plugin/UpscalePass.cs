@@ -24,7 +24,7 @@ namespace KoH2Upscale
         CommandBuffer cb;
         IntPtr renderEvent;
         bool initIssued;
-        RenderTexture output;
+        RenderTexture output, depthCopy;
         Rect gameRect;
         Vector2Int displaySize, renderSize;
         Vector2 jitter;
@@ -70,7 +70,26 @@ namespace KoH2Upscale
             initIssued = false;
             cb.Release();
             if (output) output.Release();
-            output = null;
+            if (depthCopy) depthCopy.Release();
+            output = depthCopy = null;
+        }
+
+        bool Vulkan => Settings.Backend == "vulkan";
+
+        // Unity's depth texture is a depth-stencil format that FFX's Vulkan backend cannot view, so the
+        // Vulkan path gets a plain float copy.
+        Texture DepthInput(Texture depth)
+        {
+            if (!Vulkan)
+                return depth;
+            if (!depthCopy || depthCopy.width != depth.width || depthCopy.height != depth.height)
+            {
+                if (depthCopy) depthCopy.Release();
+                depthCopy = new RenderTexture(depth.width, depth.height, 0, RenderTextureFormat.RFloat) { name = "KoH2Upscale Depth" };
+                depthCopy.Create();
+            }
+            Graphics.Blit(depth, depthCopy);
+            return depthCopy;
         }
 
         bool Active => Native.KU_GetState() != Native.StateFailed;
@@ -161,13 +180,13 @@ namespace KoH2Upscale
             {
                 loggedTargets = true;
                 Plugin.Log.LogInfo($"render {renderSize.x}x{renderSize.y} -> {displaySize.x}x{displaySize.y}; src {src.width}x{src.height} {src.format}, "
-                    + $"depth {depth.width}x{depth.height}, motion {motion.width}x{motion.height}, dst {(dst ? $"{dst.width}x{dst.height}" : "backbuffer")}");
+                    + $"depth {depth.width}x{depth.height} {(depth as RenderTexture)?.format}, motion {motion.width}x{motion.height}, dst {(dst ? $"{dst.width}x{dst.height}" : "backbuffer")}");
             }
 
             var frame = new KuFrame
             {
                 color = NativePtr(src),
-                depth = NativePtr(depth),
+                depth = NativePtr(DepthInput(depth)),
                 motion = NativePtr(motion),
                 output = NativePtr(output),
                 renderWidth = renderSize.x,
@@ -182,6 +201,11 @@ namespace KoH2Upscale
                 reset = reset ? 1 : 0,
                 quality = Native.QualityFor(Settings.RenderScale),
                 createFlags = Native.FlagMvLowRes | Native.FlagDepthInverted,
+                backend = Vulkan ? Native.BackendVulkan : Native.BackendNgx,
+                cameraNear = cam.nearClipPlane,
+                cameraFar = cam.farClipPlane,
+                fovY = cam.fieldOfView * Mathf.Deg2Rad,
+                frameTimeMs = Time.unscaledDeltaTime * 1000f,
             };
             reset = false;
             var ptr = frames[slot];

@@ -35,7 +35,7 @@ optiscaler_env() {
     echo PROTON_USE_OPTISCALER=1
     echo PROTON_OPTISCALER_NAME=winmm.dll
     echo PROTON_FSR4_UPGRADE=1
-    echo "PROTON_OPTISCALER_CONFIG=\"Upscalers.Dx11Upscaler=fsr31_12;Spoofing.Dxgi=false;Log.LogToFile=true;Log.LogLevel=${KOH2_OPTISCALER_LOGLEVEL:-2};FSR.Fsr4Preset=auto;FSR.DebugView=auto;FSR.Fsr4EnableDebugView=auto;FSR.Fsr4EnableWatermark=auto${KOH2_OPTISCALER_EXTRA:+;$KOH2_OPTISCALER_EXTRA}\""
+    echo "PROTON_OPTISCALER_CONFIG=\"Upscalers.Dx11Upscaler=fsr31;Spoofing.Dxgi=false;Log.LogToFile=true;Log.LogLevel=${KOH2_OPTISCALER_LOGLEVEL:-2};FSR.Fsr4Preset=auto;FSR.DebugView=auto;FSR.Fsr4EnableDebugView=auto;FSR.Fsr4EnableWatermark=auto${KOH2_OPTISCALER_EXTRA:+;$KOH2_OPTISCALER_EXTRA}\""
 }
 
 launch_and_load() {

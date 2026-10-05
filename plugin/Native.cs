@@ -12,6 +12,8 @@ namespace KoH2Upscale
         public int renderWidth, renderHeight, outputWidth, outputHeight;
         public float jitterX, jitterY, mvScaleX, mvScaleY, sharpness;
         public int reset, quality, createFlags;
+        public int backend;
+        public float cameraNear, cameraFar, fovY, frameTimeMs;
     }
 
     internal static class Native
@@ -19,6 +21,7 @@ namespace KoH2Upscale
         const string Dll = "KoH2UpscaleNative";
         internal const int EventInit = 1, EventEvaluate = 2, EventShutdown = 3;
         internal const int StateIdle = 0, StateReady = 1, StateFailed = -1;
+        internal const int BackendNgx = 0, BackendVulkan = 1;
         const int QualityMaxPerf = 0, QualityBalanced = 1, QualityMaxQuality = 2, QualityUltraPerf = 3, QualityUltraQuality = 4, QualityDlaa = 5;
         internal const int FlagMvLowRes = 1 << 1, FlagDepthInverted = 1 << 3;
 

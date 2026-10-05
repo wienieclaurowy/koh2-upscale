@@ -7,29 +7,18 @@
 #include <stdio.h>
 #include <string.h>
 #include "ngx_min.h"
+#include "bridge.h"
 
 #define EXPORT extern "C" __declspec(dllexport)
 
-struct KuFrame {
-    ID3D11Resource* color;
-    ID3D11Resource* depth;
-    ID3D11Resource* motion;
-    ID3D11Resource* output;
-    int renderWidth, renderHeight, outputWidth, outputHeight;
-    float jitterX, jitterY, mvScaleX, mvScaleY, sharpness;
-    int reset;
-    int quality;
-    int createFlags;
-};
-
 enum : int { KU_EVENT_INIT = 1, KU_EVENT_EVALUATE = 2, KU_EVENT_SHUTDOWN = 3 };
-enum : int { KU_STATE_IDLE = 0, KU_STATE_READY = 1, KU_STATE_FAILED = -1 };
 
 static CRITICAL_SECTION g_logLock;
+static FILE* g_logFile;
 static char g_log[16384];
 static size_t g_logLen;
 
-static void Log(const char* fmt, ...)
+void Log(const char* fmt, ...)
 {
     char line[512];
     va_list ap;
@@ -42,6 +31,10 @@ static void Log(const char* fmt, ...)
         n = sizeof line - 2;
     line[n++] = '\n';
     EnterCriticalSection(&g_logLock);
+    if (g_logFile) {
+        fwrite(line, 1, n, g_logFile);
+        fflush(g_logFile);
+    }
     if (g_logLen + n < sizeof g_log) {
         memcpy(g_log + g_logLen, line, n);
         g_logLen += n;
@@ -65,7 +58,7 @@ static PFN_NgxCreateFeature pCreateFeature;
 static PFN_NgxReleaseFeature pReleaseFeature;
 static PFN_NgxEvaluateFeature pEvaluateFeature;
 
-static void Fail(const char* what, NgxResult r)
+void Fail(const char* what, int r)
 {
     Log("failed: %s (0x%08X); upscaling disabled", what, (unsigned)r);
     InterlockedExchange(&g_state, KU_STATE_FAILED);
@@ -263,19 +256,51 @@ static void Shutdown()
     Log("NGX shut down");
 }
 
+static int g_backend = KU_BACKEND_NGX;
+
+static void InitBackend(KuFrame* f)
+{
+    g_backend = f ? f->backend : KU_BACKEND_NGX;
+    if (g_backend != KU_BACKEND_VULKAN) {
+        Init(f);
+        return;
+    }
+    ID3D11Device* device = nullptr;
+    if (!f->color) {
+        Fail("init without a texture", 0);
+        return;
+    }
+    f->color->GetDevice(&device);
+    bool ok = VkInit(device);
+    device->Release();
+    if (ok)
+        InterlockedExchange(&g_state, KU_STATE_READY);
+}
+
 static void __stdcall OnRenderEvent(int eventId, void* data)
 {
     KuFrame* f = static_cast<KuFrame*>(data);
     switch (eventId) {
     case KU_EVENT_INIT:
         if (g_state == KU_STATE_IDLE)
-            Init(f);
+            InitBackend(f);
         break;
     case KU_EVENT_EVALUATE:
-        Evaluate(f);
+        if (g_state != KU_STATE_READY || !f)
+            break;
+        if (g_backend == KU_BACKEND_VULKAN)
+            VkEvaluate(f);
+        else
+            Evaluate(f);
         break;
     case KU_EVENT_SHUTDOWN:
-        Shutdown();
+        if (g_backend == KU_BACKEND_VULKAN) {
+            VkShutdown();
+            InterlockedExchange(&g_state, KU_STATE_IDLE);
+            Log("Vulkan backend shut down");
+        } else {
+            Shutdown();
+        }
         break;
     }
 }
@@ -296,9 +321,17 @@ EXPORT int KU_PopLog(char* buf, int size)
     return n;
 }
 
-BOOL WINAPI DllMain(HINSTANCE, DWORD reason, LPVOID)
+BOOL WINAPI DllMain(HINSTANCE module, DWORD reason, LPVOID)
 {
-    if (reason == DLL_PROCESS_ATTACH)
+    if (reason == DLL_PROCESS_ATTACH) {
         InitializeCriticalSection(&g_logLock);
+        // A file copy of the log survives a crash that kills the process before the plugin reads the queue.
+        wchar_t path[MAX_PATH];
+        DWORD n = GetModuleFileNameW(module, path, MAX_PATH);
+        if (n > 4 && n < MAX_PATH) {
+            wcscpy(path + n - 4, L".log");
+            g_logFile = _wfopen(path, L"w");
+        }
+    }
     return TRUE;
 }
