@@ -274,7 +274,7 @@ void VkEvaluate(const KuFrame* f)
 {
     if (!EnsureContext(f))
         return;
-    Image color, depth, motion, output;
+    Image color{}, depth{}, motion{}, output{};
     Image* images[] = { &color, &depth, &motion, &output };
     if (!GetImage(f->color, color) || !GetImage(f->depth, depth) || !GetImage(f->motion, motion) || !GetImage(f->output, output)) {
         Fail("IDXGIVkInteropSurface on an input texture", 0);
