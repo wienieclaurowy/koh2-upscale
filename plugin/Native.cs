@@ -19,8 +19,8 @@ namespace KoH2Upscale
         const string Dll = "KoH2UpscaleNative";
         internal const int EventInit = 1, EventEvaluate = 2, EventShutdown = 3;
         internal const int StateIdle = 0, StateReady = 1, StateFailed = -1;
-        internal const int QualityDlaa = 5;
-        internal const int FlagMvLowRes = 1 << 1, FlagMvJittered = 1 << 2, FlagDepthInverted = 1 << 3;
+        const int QualityMaxPerf = 0, QualityBalanced = 1, QualityMaxQuality = 2, QualityUltraPerf = 3, QualityUltraQuality = 4, QualityDlaa = 5;
+        internal const int FlagMvLowRes = 1 << 1, FlagDepthInverted = 1 << 3;
 
         [DllImport("kernel32", CharSet = CharSet.Unicode, SetLastError = true)]
         static extern IntPtr LoadLibraryW(string path);
@@ -44,6 +44,10 @@ namespace KoH2Upscale
             Loaded = true;
             return true;
         }
+
+        internal static int QualityFor(float scale) =>
+            scale >= 0.99f ? QualityDlaa : scale >= 0.75f ? QualityUltraQuality : scale >= 0.64f ? QualityMaxQuality
+            : scale >= 0.55f ? QualityBalanced : scale >= 0.45f ? QualityMaxPerf : QualityUltraPerf;
 
         internal static void PumpLog()
         {
