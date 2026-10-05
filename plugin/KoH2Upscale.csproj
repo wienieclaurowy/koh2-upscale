@@ -21,6 +21,8 @@
     <Reference Include="$(Managed)/Unity.Postprocessing.Runtime.dll" Private="false" />
     <Reference Include="$(Managed)/Assembly-CSharp.dll" Private="false" />
     <Reference Include="$(Managed)/Assembly-CSharp-firstpass.dll" Private="false" />
+    <Reference Include="$(Managed)/Sentry.dll" Private="false" />
+    <Reference Include="$(Managed)/Sentry.Unity.dll" Private="false" />
   </ItemGroup>
   <Target Name="Deploy" AfterTargets="Build" Condition="'$(Deploy)' == 'true'">
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(GameDir)/BepInEx/plugins/KoH2Upscale" />

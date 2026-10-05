@@ -18,6 +18,8 @@ namespace KoH2Upscale
         void Awake()
         {
             Log = Logger;
+            if (DevCrashReports.Wanted)
+                new HarmonyLib.Harmony("io.github.wienieclaurowy.koh2upscale").PatchAll(typeof(DevCrashReports));
             Log.LogInfo($"graphics {SystemInfo.graphicsDeviceType} {SystemInfo.graphicsDeviceVersion}, screen {Screen.width}x{Screen.height}");
             SceneManager.sceneLoaded += (scene, mode) => { Log.LogInfo($"scene loaded: {scene.name} ({mode})"); DumpCameras(false); };
             // The game destroys BepInEx's manager object after startup, so runtime components live on our own.
