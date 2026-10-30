@@ -25,6 +25,7 @@ finish() {
     for i in $(seq 1 60); do [ -z "$(game_pid)" ] && break; sleep 1; done
     local pid; pid=$(game_pid); [ -n "$pid" ] && kill "$pid"
     rm -f "$dir/launch.env" "$cmd"
+    if [ -f "$dir/launch.env.play" ]; then mv "$dir/launch.env.play" "$dir/launch.env"; fi
 }
 
 # KOH2_OPTISCALER=1 loads Proton-CachyOS's OptiScaler as winmm.dll (UnityPlayer imports it; BepInEx owns
@@ -40,6 +41,8 @@ optiscaler_env() {
 
 launch_and_load() {
     [ -n "$(game_pid)" ] && { echo "game already running"; return 1; }
+    # A launch.env left for normal Steam play is set aside and restored by finish.
+    [ -f "$dir/launch.env" ] && [ ! -f "$dir/launch.env.play" ] && mv "$dir/launch.env" "$dir/launch.env.play"
     {
         echo "WINEDLLOVERRIDES=winhttp=n,b"
         echo "KOH2UPSCALE_NO_CRASH_REPORTS=1"
