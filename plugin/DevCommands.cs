@@ -31,8 +31,6 @@ namespace KoH2Upscale
                 pendingLoad = null;
                 Load(args[0], args[1]);
             }
-            if (Input.GetKeyDown(KeyCode.F10))
-                Plugin.DumpCameras(true);
             if (Time.unscaledTime >= nextCameraPoll)
             {
                 nextCameraPoll = Time.unscaledTime + 5f;
