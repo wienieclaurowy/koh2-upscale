@@ -12,6 +12,7 @@ namespace KoH2Upscale
         internal static float RenderScale { get; private set; }
         internal static float Sharpness { get; private set; }
         internal static float MipBiasOffset { get; private set; }
+        internal static UnityEngine.KeyCode ToggleKey { get; private set; }
 
         internal static void Load(ConfigFile config)
         {
@@ -22,6 +23,8 @@ namespace KoH2Upscale
             RenderScale = Clamp(EnvFloat("SCALE") ?? config.Bind("Upscaler", "RenderScale", 0.667f,
                 "Render size as a fraction of the screen: 1.0 = native AA, 0.667 = quality, 0.5 = performance.").Value, 0.33f, 1f);
             Sharpness = Clamp(EnvFloat("SHARPNESS") ?? config.Bind("Upscaler", "Sharpness", 0f, "0 to 1.").Value, 0f, 1f);
+            ToggleKey = config.Bind("Upscaler", "ToggleKey", UnityEngine.KeyCode.F8,
+                "Switches upscaling off and on in game, for comparing with native rendering.").Value;
             MipBiasOffset = EnvFloat("MIP_BIAS_OFFSET") ?? config.Bind("Upscaler", "MipBiasOffset", -1f,
                 "Added to log2(render/display) for texture mip bias; FSR recommends -1. Less negative if textures shimmer.").Value;
         }

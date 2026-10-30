@@ -54,7 +54,7 @@ namespace KoH2Upscale
 
         void ApplyMipBias()
         {
-            if (Settings.RenderScale < 0.99f)
+            if (Settings.RenderScale < 0.99f && !Bypassed)
                 MipBias.Apply(Mathf.Log(Settings.RenderScale, 2f) + Settings.MipBiasOffset);
         }
 
@@ -94,9 +94,24 @@ namespace KoH2Upscale
 
         bool Active => Native.KU_GetState() != Native.StateFailed;
 
+        internal static bool Bypassed { get; private set; }
+
+        internal void SetBypassed(bool bypassed)
+        {
+            Bypassed = bypassed;
+            if (bypassed)
+                MipBias.Restore();
+            else
+            {
+                ApplyMipBias();
+                reset = true;
+            }
+            Plugin.Log.LogInfo($"upscaling {(bypassed ? "off" : "on")}");
+        }
+
         void OnPreCull()
         {
-            if (!Active)
+            if (!Active || Bypassed)
                 return;
             // UserSettings.UpdateCameraDepthMode strips MotionVectors unless the game's own TAA is on.
             cam.depthTextureMode |= DepthTextureMode.Depth | DepthTextureMode.MotionVectors;

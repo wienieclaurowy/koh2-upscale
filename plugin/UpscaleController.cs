@@ -9,9 +9,13 @@ namespace KoH2Upscale
         {
             Native.PumpLog();
             var cam = CameraController.MainCamera;
-            if (cam == null || cam.name != "WVCamera" || cam.GetComponent<UpscalePass>() != null)
+            if (cam == null || cam.name != "WVCamera")
                 return;
-            cam.gameObject.AddComponent<UpscalePass>();
+            var pass = cam.GetComponent<UpscalePass>();
+            if (pass == null)
+                pass = cam.gameObject.AddComponent<UpscalePass>();
+            if (Input.GetKeyDown(Settings.ToggleKey))
+                pass.SetBypassed(!UpscalePass.Bypassed);
         }
     }
 }

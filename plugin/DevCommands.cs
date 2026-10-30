@@ -68,6 +68,7 @@ namespace KoH2Upscale
                     case "load": pendingLoad = new[] { parts[1], parts[2] }; break;
                     case "bench": Bench(); break;
                     case "view": View(int.Parse(parts[1])); break;
+                    case "toggle": CameraController.MainCamera.GetComponent<UpscalePass>().SetBypassed(!UpscalePass.Bypassed); break;
                     case "aa": Plugin.Log.LogInfo($"aa {parts[1]}: {UserSettings.SetAntialiasing(parts[1])}"); break;
                     case "cams": Plugin.DumpCameras(true); break;
                     case "quit": Application.Quit(); break;
